@@ -21,6 +21,11 @@ if (fs.existsSync(path.join(__dirname, 'config.json'))) {
   }
 }
 
+// Enforce Railway/environment port binding
+if (process.env.PORT) {
+  config.server.port = process.env.PORT;
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
