@@ -39,6 +39,37 @@ const io = new Server(server, {
   }
 });
 
+// Listen for incoming WebSocket connections and telemetry streams from nodes/simulators
+io.on('connection', (socket) => {
+  socket.on('csi-frame', (data) => {
+    if (!data || !data.mac) return;
+    
+    const { mac, rssi, noise } = data;
+    meshNodes[mac] = {
+      ip: socket.handshake.address,
+      rssi: rssi || -48,
+      noise: noise || -95,
+      lastSeen: Date.now()
+    };
+    
+    systemMode = 'LIVE - ESP32';
+    lastLiveFrameTime = Date.now();
+    
+    // Broadcast received telemetry to all connected client dashboards
+    io.emit('telemetry', {
+      mac,
+      rssi: rssi || -48,
+      noise: noise || -95,
+      mode: 'LIVE - ESP32',
+      simulated: false,
+      timestamp: Date.now(),
+      metrics: data.metrics,
+      occupancy: data.occupancy,
+      pose: data.pose
+    });
+  });
+});
+
 // Import DSP helpers
 const { BandpassFilter, calculateBPM, calculateSignalVariance } = require('./dsp/filters');
 const { OccupancyDetector } = require('./dsp/occupancy');

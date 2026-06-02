@@ -26,3 +26,11 @@ flash-esp32:
 clean:
 	rm -rf node_modules
 	rm -rf firmware/esp32-s3-csi-node/build
+
+# Start hardware node emulator pointing to local host
+emulate-local:
+	node tools/node_emulator.js http://localhost:3000
+
+# Start hardware node emulator pointing to Railway deployment
+emulate-railway:
+	node tools/node_emulator.js https://wisense-production.up.railway.app
