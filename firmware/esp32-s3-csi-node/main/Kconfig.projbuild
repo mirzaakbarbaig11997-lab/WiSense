@@ -1,0 +1,21 @@
+menu "WiSense CSI Configuration"
+
+    config WISENSE_WIFI_SSID
+        string "WiFi SSID"
+        default "WiSense_Mesh"
+        help
+            SSID of the router/AP that the CSI transmitter and receiver are connected to.
+
+    config WISENSE_WIFI_PASSWORD
+        string "WiFi Password"
+        default "wisense123"
+        help
+            SSID Password of the router/AP.
+
+    config WISENSE_AGGREGATOR_IP
+        string "Aggregator Server IP Address"
+        default "192.168.1.10"
+        help
+            Destination IPv4 address of the WiSense Aggregator listening on UDP port 8082.
+
+endmenu

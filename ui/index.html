@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WiSense — Contactless Spatial Intelligence</title>
+  <meta name="description" content="WiSense uses standard WiFi signals to detect room occupancy, track vitals, and recognize human falls with zero wearables or cameras.">
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesque:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Socket.io -->
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  
+  <!-- Main Glassmorphic Wrapper -->
+  <div class="app-container">
+    
+    <!-- Left Navigation Bar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-icon"><i class="fa-solid fa-radar fa-spin"></i></div>
+        <div class="brand-info">
+          <h1>WiSense</h1>
+          <span>wisense.io</span>
+        </div>
+      </div>
+      
+      <nav class="navigation">
+        <button class="nav-item active" id="btn-dashboard" data-tab="dashboard">
+          <i class="fa-solid fa-gauge"></i> <span>Dashboard</span>
+        </button>
+        <button class="nav-item" id="btn-sensing" data-tab="sensing">
+          <i class="fa-solid fa-wave-square"></i> <span>WiFi Sensing</span>
+        </button>
+        <button class="nav-item" id="btn-tracker" data-tab="tracker">
+          <i class="fa-solid fa-person-walking"></i> <span>Spatial Tracking</span>
+        </button>
+        <button class="nav-item" id="btn-hardware" data-tab="hardware">
+          <i class="fa-solid fa-microchip"></i> <span>Hardware Mesh</span>
+        </button>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="mode-status simulated" id="system-mode-badge">
+          <span class="pulse-dot"></span>
+          <span class="mode-text">SIMULATED DATA</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Bar / Header -->
+      <header class="header">
+        <div class="title-section">
+          <h2 id="current-tab-title">System Dashboard</h2>
+          <p id="current-tab-subtitle">Real-time room occupancy and vital telemetry overview.</p>
+        </div>
+        <div class="header-actions">
+          <div class="telemetry-pill">
+            <i class="fa-solid fa-tower-broadcast"></i>
+            <span id="active-nodes-count">0 Nodes Active</span>
+          </div>
+          <button class="btn btn-secondary" id="btn-calibrate">
+            <i class="fa-solid fa-rotate"></i> Calibrate Baseline
+          </button>
+        </div>
+      </header>
+
+      <!-- Alert Banner for emergency states (e.g. Falls) -->
+      <div class="alert-banner hidden" id="alert-banner">
+        <div class="alert-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="alert-content">
+          <h4>FALL DETECTED IN MONITORING ZONE</h4>
+          <p>Sudden spatial acceleration spike registered. Dispatching alert triggers.</p>
+        </div>
+        <button class="alert-dismiss" id="btn-dismiss-alert"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Tab Content: Dashboard -->
+      <section class="tab-pane active" id="tab-dashboard">
+        <div class="grid-layout">
+          <!-- Main Vitals Widget -->
+          <div class="card glass-card col-span-2">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-heart-pulse icon-vitals"></i> Real-time Vital Signs</h3>
+              <span class="badge state-vitals" id="vital-status-text">Detecting...</span>
+            </div>
+            <div class="card-body vitals-grid">
+              <div class="metric-block">
+                <span class="metric-label">Breathing Rate</span>
+                <div class="metric-value">
+                  <span id="txt-breathing">--</span> <span class="unit">BPM</span>
+                </div>
+                <div class="sparkline-wrapper">
+                  <canvas id="chart-breathing-wave"></canvas>
+                </div>
+              </div>
+              <div class="metric-block">
+                <span class="metric-label">Heart Rate</span>
+                <div class="metric-value">
+                  <span id="txt-heartrate">--</span> <span class="unit">BPM</span>
+                </div>
+                <div class="sparkline-wrapper">
+                  <canvas id="chart-heartrate-wave"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Room Status Card -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-house-laptop"></i> Zone Occupancy</h3>
+            </div>
+            <div class="card-body center-content">
+              <div class="occupancy-state-display" id="display-occupancy-state">
+                <i class="fa-solid fa-person-circle-question state-icon"></i>
+                <h4 id="txt-occupancy-state">Calibrating...</h4>
+                <p>Confidence: <span id="txt-occupancy-confidence">0%</span></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vitals Analytics Graph -->
+          <div class="card glass-card col-span-3">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-chart-line"></i> Historical Signals and Phase Variance</h3>
+            </div>
+            <div class="card-body full-width-chart">
+              <canvas id="chart-signal-history" class="main-history-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab Content: WiFi Sensing -->
+      <section class="tab-pane" id="tab-sensing">
+        <div class="grid-layout">
+          <!-- 3D Signal Field Representation -->
+          <div class="card glass-card col-span-2 heavy-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-circle-nodes"></i> 3D WiFi Signal Field (Phase Perturbations)</h3>
+              <p class="header-desc">Shows multipath scattering and spatial variance in real-time.</p>
+            </div>
+            <div class="card-body canvas-container" id="room-3d-container">
+              <!-- Three.js room map goes here -->
+            </div>
+          </div>
+
+          <!-- Signal Metrics -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-sliders"></i> Sensor Tuning</h3>
+            </div>
+            <div class="card-body controls-layout">
+              <div class="control-group">
+                <label for="range-dedup">Calibration Dedup Factor</label>
+                <div class="range-wrapper">
+                  <input type="range" id="range-dedup" min="0.5" max="5.0" step="0.1" value="2.2">
+                  <span id="val-dedup">2.2</span>
+                </div>
+              </div>
+              <div class="metric-row">
+                <span>Phase Variance</span>
+                <strong id="metric-phase-var">0.00</strong>
+              </div>
+              <div class="metric-row">
+                <span>RSSI Amplitude</span>
+                <strong id="metric-rssi">-0.00 dBm</strong>
+              </div>
+              <div class="metric-row">
+                <span>Signal Consistency</span>
+                <strong id="metric-consistency">0.00%</strong>
+              </div>
+              <button class="btn btn-primary" id="btn-save-tuning">Save Parameters</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab Content: Spatial Tracking -->
+      <section class="tab-pane" id="tab-tracker">
+        <div class="grid-layout">
+          <!-- 17-Keypoint Body Skeleton Canvas -->
+          <div class="card glass-card col-span-2 heavy-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-child"></i> WiFi-DensePose Keypoint Estimation</h3>
+              <span class="badge badge-estimation" id="badge-est-mode">Signal-Derived</span>
+            </div>
+            <div class="card-body center-content dark-bg">
+              <canvas id="skeleton-canvas" class="skeleton-canvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Setup Instructions / Node Count Impact -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-circle-info"></i> Node Precision Setup</h3>
+            </div>
+            <div class="card-body guide-panel">
+              <div class="guide-step" data-nodes="1">
+                <h5>1 Active Node</h5>
+                <p>Provides coarse presence, breathing rate, and room-level motion.</p>
+              </div>
+              <div class="guide-step" data-nodes="2">
+                <h5>2-3 Active Nodes</h5>
+                <p>Adds 2D body localization, directional velocity, and fall detection.</p>
+              </div>
+              <div class="guide-step active" data-nodes="4">
+                <h5>4+ Active Nodes</h5>
+                <p>Enables 17-keypoint 3D skeleton pose tracking using pretrained weights.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab Content: Hardware Mesh -->
+      <section class="tab-pane" id="tab-hardware">
+        <div class="grid-layout">
+          <!-- Node Configuration Panel -->
+          <div class="card glass-card col-span-2">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-network-wired"></i> ESP32-S3 Mesh Topology</h3>
+            </div>
+            <div class="card-body">
+              <div class="node-table-wrapper">
+                <table class="node-table" id="table-mesh-nodes">
+                  <thead>
+                    <tr>
+                      <th>Device MAC</th>
+                      <th>IPv4 Address</th>
+                      <th>Channel</th>
+                      <th>RSSI</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Injected dynamically -->
+                    <tr class="empty-row">
+                      <td colspan="5">No live hardware nodes connected. Aggregator streaming simulation.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Provision Helper -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-terminal"></i> Fast Provisioning</h3>
+            </div>
+            <div class="card-body terminal-layout">
+              <p>Flash your node with the firmware then provision via Python:</p>
+              <pre class="code-terminal">python provision.py \
+  --port COM9 \
+  --ssid "WiSense_Mesh" \
+  --password "wisense123" \
+  --target-ip 192.168.1.10</pre>
+              <p class="note">Replaces the target server endpoint config on the node instantly.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Client-Side Applications Scripts -->
+  <script src="components/TabManager.js"></script>
+  <script src="components/RoomMap3D.js"></script>
+  <script src="components/SkeletonCanvas.js"></script>
+  <script src="components/VitalsTracker.js"></script>
+  <script src="services/socket.service.js"></script>
+  <script src="services/data.service.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

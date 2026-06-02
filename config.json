@@ -1,0 +1,23 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0"
+  },
+  "dsp": {
+    "breathing_min_hz": 0.1,
+    "breathing_max_hz": 0.5,
+    "heart_rate_min_hz": 0.8,
+    "heart_rate_max_hz": 2.0,
+    "presence_threshold": 0.15,
+    "fall_acceleration_threshold": 2.5
+  },
+  "mesh": {
+    "expected_nodes": 4,
+    "channel_hopping": true,
+    "channels": [1, 6, 11, 36, 44, 48]
+  },
+  "attestation": {
+    "enabled": true,
+    "algorithm": "Ed25519"
+  }
+}

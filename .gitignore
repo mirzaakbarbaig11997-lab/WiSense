@@ -1,0 +1,32 @@
+# Dependency Directories
+node_modules/
+jspm_packages/
+web_folders/
+
+# Build outputs
+dist/
+build/
+bin/
+
+# Local configuration
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# ESP-IDF specific configurations
+sdkconfig
+sdkconfig.old
+firmware/esp32-s3-csi-node/build/
+firmware/esp32-s3-csi-node/sdkconfig
+
+# System Files
+.DS_Store
+Thumbs.db
